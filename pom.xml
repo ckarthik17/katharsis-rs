@@ -5,11 +5,12 @@
     <parent>
         <groupId>io.katharsis</groupId>
         <artifactId>katharsis-parent</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.5</version>
     </parent>
 
+    <groupId>io.katharsis</groupId>
     <artifactId>katharsis-rs</artifactId>
-    <version>2.1.2-SNAPSHOT</version>
+    <version>2.2.0</version>
     <packaging>bundle</packaging>
 
     <name>katharsis-rs</name>

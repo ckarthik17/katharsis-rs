@@ -1,6 +1,13 @@
 package io.katharsis.rs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.katharsis.locator.SampleJsonServiceLocator;
+import io.katharsis.rs.parameterProvider.JaxRsParameterProvider;
+import io.katharsis.rs.parameterProvider.RequestContextParameterProviderLookup;
+import io.katharsis.rs.parameterProvider.RequestContextParameterProviderRegistry;
+import io.katharsis.rs.parameterProvider.RequestContextParameterProviderRegistryBuilder;
+import io.katharsis.rs.resource.provider.AuthRequest;
+import io.katharsis.rs.resource.provider.Foo;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,12 +20,12 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.SecurityContext;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,12 +45,24 @@ public class JaxRsParameterProviderTest {
 
     @Before
     public void setUp() throws Exception {
-        sut = new JaxRsParameterProvider(objectMapper, requestContext);
+        RequestContextParameterProviderLookup containerRequestContextProviderLookup = createRequestContextProviderLookup();
+        RequestContextParameterProviderRegistry parameterProviderRegistry = buildParameterProviderRegistry(containerRequestContextProviderLookup);
+        sut = new JaxRsParameterProvider(objectMapper, requestContext, parameterProviderRegistry);
 
-        testMethod = Arrays.stream(TestClass.class.getDeclaredMethods())
-            .filter(method -> "testMethod".equals(method.getName()))
-            .findFirst()
-            .get();
+        for (Method method : TestClass.class.getDeclaredMethods()) {
+            if ("testMethod".equals(method.getName())) {
+                testMethod = method;
+            }
+        }
+    }
+
+    private RequestContextParameterProviderLookup createRequestContextProviderLookup() {
+        return new RequestContextParameterProviderLookup("io.katharsis.rs.resource", new SampleJsonServiceLocator());
+    }
+
+    private RequestContextParameterProviderRegistry buildParameterProviderRegistry(RequestContextParameterProviderLookup containerRequestContextProviderLookup) {
+        RequestContextParameterProviderRegistryBuilder builder = new RequestContextParameterProviderRegistryBuilder();
+        return builder.build(containerRequestContextProviderLookup);
     }
 
     @Test
@@ -115,7 +134,7 @@ public class JaxRsParameterProviderTest {
     public void onStringHeaderShouldReturnThisInstance() throws Exception {
         // GIVEN
         UUID uuid = UUID.randomUUID();
-        when(requestContext.getHeaderString(any())).thenReturn(uuid.toString());
+        when(requestContext.getHeaderString(anyString())).thenReturn(uuid.toString());
 
         // WHEN
         Object result = sut.provide(testMethod, 5);
@@ -129,7 +148,7 @@ public class JaxRsParameterProviderTest {
     public void onUuidHeaderShouldReturnThisInstance() throws Exception {
         // GIVEN
         UUID uuid = UUID.randomUUID();
-        when(requestContext.getHeaderString(any())).thenReturn(uuid.toString());
+        when(requestContext.getHeaderString(anyString())).thenReturn(uuid.toString());
         when(objectMapper.readValue(any(String.class), any(Class.class))).thenReturn(uuid);
 
         // WHEN
@@ -141,10 +160,34 @@ public class JaxRsParameterProviderTest {
         assertThat(result).isEqualTo(uuid);
     }
 
+    @Test
+    public void onStringFooShouldReturnThisInstance() throws Exception {
+
+        // WHEN
+        Object result = sut.provide(testMethod, 7);
+
+        // THEN
+        assertThat(result).isEqualTo("foo");
+    }
+
+    @Test
+    public void onAuthRequestShouldReturnThisInstance() throws Exception {
+        // GIVEN
+        AuthRequest authRequest = new AuthRequest("Basic", "abc:123");
+        when(requestContext.getHeaderString("Authorization")).thenReturn("Basic abc:123");
+
+        // WHEN
+        Object result = sut.provide(testMethod, 8);
+
+        // THEN
+        verify(requestContext).getHeaderString("Authorization");
+        assertThat(result).isEqualTo(authRequest);
+    }
+
     public static class TestClass {
         public void testMethod(ContainerRequestContext requestContext, SecurityContext securityContext,
                                @CookieParam("sid") Cookie objectCookie, @CookieParam("sid") String StringCookie,
                                @CookieParam("sid") Long longCookie, @HeaderParam("cid") String StringHeader,
-                               @HeaderParam("cid") UUID UuidHeader) {}
+                               @HeaderParam("cid") UUID UuidHeader, @Foo String foo, AuthRequest authRequest) {}
     }
 }

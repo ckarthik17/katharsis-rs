@@ -1,5 +1,24 @@
-# katharsis-rs v2.1.2-SNAPSHOT git changelog
+# katharsis-rs v2.2.0 git changelog
 
+2016-02-03    Fixed spring boot example (Razvan Dragut)  
+2016-02-03    Enhancement [#209](https://github.com/katharsis-project/katharsis-rs/issues/209) - Provide custom QueryParamsBuilder (Razvan Dragut)  
+2016-01-27    v2.1.7 (Patryk Orwat)  
+
+**v2.1.7**  
+**v2.1.5**  
+2016-01-26    v2.1.5 (Patryk Orwat)  
+2015-12-27    katharsis-project/katharsis-core[#107](https://github.com/katharsis-project/katharsis-rs/issues/107) added PropertyNamingStrategy (Patryk Orwat)  
+
+**v2.1.3**  
+2015-12-21    v2.1.3 (Patryk Orwat)  
+2015-12-21    katharsis-project/katharsis-core[#48](https://github.com/katharsis-project/katharsis-rs/issues/48) downgrade to Java 7 (Patryk Orwat)  
+2015-12-15    use the jsonServiceLocator to instantiate the parameter providers (Cade Parker)  
+2015-12-12    review (meshuga)  
+2015-12-10    JaxRsParameterProvider uses a registry of parameter providers to provide values from the ContainerRequestContext (Cade Parker)  
+
+**v2.1.2**  
+2015-12-09    v2.1.2 (Patryk Orwat)  
+2015-12-08    katharsis-project/katharsis-core[#186](https://github.com/katharsis-project/katharsis-rs/issues/186) made reflections optional (Patryk Orwat)  
 2015-12-06    katharsis-project/katharsis-core[#186](https://github.com/katharsis-project/katharsis-rs/issues/186) added OSGi headers (Patryk Orwat)  
 2015-12-05    versioneye update (Patryk Orwat)  
 

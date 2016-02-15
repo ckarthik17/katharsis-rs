@@ -12,6 +12,8 @@ import io.katharsis.request.path.JsonPath;
 import io.katharsis.request.path.PathBuilder;
 import io.katharsis.resource.registry.ResourceRegistry;
 import io.katharsis.response.BaseResponse;
+import io.katharsis.rs.parameterProvider.JaxRsParameterProvider;
+import io.katharsis.rs.parameterProvider.RequestContextParameterProviderRegistry;
 import io.katharsis.rs.type.JsonApiMediaType;
 
 import javax.ws.rs.WebApplicationException;
@@ -49,15 +51,21 @@ import static io.katharsis.rs.type.JsonApiMediaType.APPLICATION_JSON_API_TYPE;
 public class KatharsisFilter implements ContainerRequestFilter {
 
     private ObjectMapper objectMapper;
+    private QueryParamsBuilder queryParamsBuilder;
     private ResourceRegistry resourceRegistry;
     private RequestDispatcher requestDispatcher;
+    private RequestContextParameterProviderRegistry parameterProviderRegistry;
     private String webPathPrefix;
 
-    public KatharsisFilter(ObjectMapper objectMapper, ResourceRegistry resourceRegistry, RequestDispatcher
-        requestDispatcher, String webPathPrefix) {
+    public KatharsisFilter(ObjectMapper objectMapper,
+                           QueryParamsBuilder queryParamsBuilder,
+                           ResourceRegistry resourceRegistry, RequestDispatcher
+            requestDispatcher, RequestContextParameterProviderRegistry parameterProviderRegistry, String webPathPrefix) {
         this.objectMapper = objectMapper;
+        this.queryParamsBuilder = queryParamsBuilder;
         this.resourceRegistry = resourceRegistry;
         this.requestDispatcher = requestDispatcher;
+        this.parameterProviderRegistry = parameterProviderRegistry;
         this.webPathPrefix = parsePrefix(webPathPrefix);
     }
 
@@ -112,7 +120,7 @@ public class KatharsisFilter implements ContainerRequestFilter {
             String method = requestContext.getMethod();
             RequestBody requestBody = inputStreamToBody(requestContext.getEntityStream());
 
-            JaxRsParameterProvider parameterProvider = new JaxRsParameterProvider(objectMapper, requestContext);
+            JaxRsParameterProvider parameterProvider = new JaxRsParameterProvider(objectMapper, requestContext, parameterProviderRegistry);
             katharsisResponse = requestDispatcher
                 .dispatchRequest(jsonPath, method, requestParams, parameterProvider, requestBody);
         } catch (KatharsisMappableException e) {
@@ -153,8 +161,6 @@ public class KatharsisFilter implements ContainerRequestFilter {
     }
 
     private QueryParams createQueryParams(UriInfo uriInfo) {
-        QueryParamsBuilder requestParamsBuilder = new QueryParamsBuilder();
-
         MultivaluedMap<String, String> queryParametersMultiMap = uriInfo.getQueryParameters();
         Map<String, Set<String>> queryParameters = new HashMap<>();
 
@@ -162,7 +168,7 @@ public class KatharsisFilter implements ContainerRequestFilter {
             queryParameters.put(queryName, new LinkedHashSet<>(queryParametersMultiMap.get(queryName)));
         }
 
-        return requestParamsBuilder.buildQueryParams(queryParameters);
+        return queryParamsBuilder.buildQueryParams(queryParameters);
     }
 
     public RequestBody inputStreamToBody(InputStream is) throws IOException {
